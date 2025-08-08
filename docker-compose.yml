@@ -1,0 +1,62 @@
+version: "3"
+
+services:
+  # Zookeeper service for Kafka coordination
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181:2181" # Zookeeper port
+    networks:
+      - kafka-network # Connect to the Kafka network
+
+  # Kafka service for messaging
+  kafka:
+    image: wurstmeister/kafka
+    ports:
+      - "9092:9092" # Kafka broker port
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181 # Zookeeper address
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092 # Kafka listens on all interfaces
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092 # Internal container address for Kafka
+      KAFKA_BROKER_ID: 1 # Unique broker ID for Kafka
+    depends_on:
+      - zookeeper # Start Kafka only after Zookeeper is running
+    networks:
+      - kafka-network # Connect to the Kafka network
+
+  # Cassandra service for database storage
+  cassandra:
+    image: cassandra:3.11.9
+    ports:
+      - "9042:9042" # Cassandra query port
+    networks:
+      - kafka-network # Connect to the Kafka network
+
+  # Spark master service for cluster management
+  spark-master:
+    image: bitnami/spark:3.4.0 # Update the Spark version here
+    environment:
+      - SPARK_MODE=master # Configure Spark in master mode
+    ports:
+      - "7077:7077" # Port for Spark master
+      - "8080:8080" # Spark master web UI port
+    networks:
+      - kafka-network # Connect to the Kafka network
+
+  # Spark worker service for distributed computing
+  spark-worker:
+    image: bitnami/spark:3.4.0 # Update the Spark version here
+    environment:
+      - SPARK_MODE=worker # Configure Spark in worker mode
+      - SPARK_MASTER_URL=spark://spark-master:7077 # Point to the Spark master
+    depends_on:
+      - spark-master # Start Spark worker only after Spark master is running
+    ports:
+      - "8081:8081" # Spark worker web UI port
+    networks:
+      - kafka-network # Connect to the Kafka network
+
+# Define the network for Kafka, Zookeeper, Cassandra, and Spark services
+networks:
+  kafka-network:
+    driver: bridge # Use bridge network mode

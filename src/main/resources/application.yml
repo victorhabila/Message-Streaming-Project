@@ -1,0 +1,25 @@
+spring:
+  # Cassandra configuration
+  cassandra:
+    contact-points: cassandra # The hostname of the Cassandra service from Docker Compose
+    port: 9042 # The port to connect to Cassandra
+    keyspace-name: demo_keyspace # The keyspace to use in Cassandra
+    local-datacenter: datacenter1 # The local datacenter name for load balancing (set to datacenter1)
+
+  # Kafka configuration
+  kafka:
+    bootstrap-servers: kafka:9092 # Use the name of the Kafka service in Docker Compose and port 9092
+    consumer:
+      group-id: my-group # The consumer group ID for Kafka
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer # Deserialize the key from Kafka messages
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer # Deserialize the value from Kafka messages
+      auto-offset-reset: earliest # Start consuming from the earliest offset if no offsets are found
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer # Serialize the key for Kafka messages
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer # Serialize the value for Kafka messages
+    listener:
+      auto-startup: true # Automatically start Kafka listeners when the application starts
+
+# Server configuration
+server:
+  port: 8082 # The port where the Spring Boot application will run in the container
